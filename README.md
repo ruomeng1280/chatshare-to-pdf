@@ -1,5 +1,6 @@
 # ChatGPT Download Extension
-正常运行功能按键，见界面右下：   ![image](https://github.com/user-attachments/assets/7d5fde24-c647-44cc-a69b-c7e08c523dba)
+正常运行功能按键，安装后见界面右下，如图所示：
+![image](https://github.com/user-attachments/assets/7d5fde24-c647-44cc-a69b-c7e08c523dba)
 
 ## 简介
 ChatGPT Download是一个Chrome扩展，允许用户以PNG或PDF格式下载ChatGPT对话。
