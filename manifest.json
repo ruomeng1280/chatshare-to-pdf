@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "ChatGPT Download",
+  "version": "1.3.9",
+  "description": "Download ChatGPT conversations as PNG or PDF",
+  "author": "Liad Yosef",
+  "icons": {
+    "48": "icons/48.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://chat.openai.com/*", "*://*.chatgpt.com/*", "*://*.chatshare.biz/*"],
+      "js": [
+        "scripts/debug_helper.js",
+        "content_script_adapter.js",
+        "scripts/html2canvas.min.js",
+        "scripts/jspdf.umd.min.js",
+        "content_script.js"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "scripting",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://chat.openai.com/*",
+    "*://*.chatgpt.com/*",
+    "*://*.chatshare.biz/*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*"],
+      "matches": ["*://chat.openai.com/*", "*://*.chatgpt.com/*", "*://*.chatshare.biz/*"]
+    }
+  ]
+}
+
