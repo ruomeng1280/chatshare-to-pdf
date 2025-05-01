@@ -8,6 +8,16 @@ ChatGPT Download是一个Chrome扩展，允许用户以PNG或PDF格式下载Chat
 - 生成PNG图像：将整个对话截图保存为PNG图像
 - 下载PDF文件：将对话转换为PDF文档
 
+## 安装方法（Chrome/Edge）
+1. 从发布页面的最新版本中下载 `chatshare to pdf.zip` 文件。  
+2. 解压下载的文件以提取扩展程序文件。  
+3. 在 Chrome 或 Edge 中打开扩展程序页面：
+   - Chrome 地址：`chrome://extensions`  
+   - Edge 地址：`edge://extensions`  
+4. 点击页面右上角的开关，启用“开发者模式”。  
+5. 点击“加载已解压的扩展程序”按钮，选择你刚才解压扩展文件的文件夹。  
+6. **ChatGPT Export** 扩展程序现在应该已经安装，并在 Chatshare 网站上激活。
+
 ## 使用方法
 1. 安装扩展后，访问Chatshare网站
 2. 在对话界面，扩展会在页面右下角自动添加功能按钮
