@@ -514,6 +514,69 @@ function preprocessColors() {
     log('预处理CSS颜色，替换不支持的颜色格式...');
     originalColors = []; // 重置存储
     
+    // 处理所有具有计算样式的元素
+    const allElements = document.querySelectorAll('*');
+    const processedElements = new Set(); // 避免重复处理
+    
+    // 先处理内联样式
+    const elementsWithInlineStyle = document.querySelectorAll('[style*="oklch"]');
+    for (let i = 0; i < elementsWithInlineStyle.length; i++) {
+      const element = elementsWithInlineStyle[i];
+      processedElements.add(element);
+      const style = element.getAttribute('style');
+      originalColors.push({
+        element: element,
+        style: style
+      });
+      
+      // 替换内联样式中的oklch
+      let newStyle = style.replace(/oklch\([^)]+\)/g, 'rgb(16, 163, 127)');
+      element.setAttribute('style', newStyle);
+    }
+    
+    // 处理计算样式中带有oklch的元素
+    for (let i = 0; i < allElements.length; i++) {
+      const element = allElements[i];
+      if (processedElements.has(element)) continue;
+      
+      const computedStyle = window.getComputedStyle(element);
+      let hasOklch = false;
+      
+      // 检查所有可能的颜色属性
+      const colorProps = [
+        'color', 'background-color', 'border-color', 'border-top-color', 
+        'border-right-color', 'border-bottom-color', 'border-left-color',
+        'outline-color', 'text-decoration-color', 'box-shadow'
+      ];
+      
+      // 临时样式对象，用于存储需要修改的属性
+      const tempStyle = {};
+      
+      for (const prop of colorProps) {
+        const value = computedStyle.getPropertyValue(prop);
+        if (value && value.includes('oklch')) {
+          hasOklch = true;
+          tempStyle[prop] = 'rgb(16, 163, 127)';
+          
+          // 保存原始值以便恢复
+          originalColors.push({
+            element: element,
+            prop: prop,
+            value: value
+          });
+        }
+      }
+      
+      // 如果有oklch颜色，则应用内联样式覆盖
+      if (hasOklch) {
+        let newInlineStyle = element.getAttribute('style') || '';
+        for (const [prop, value] of Object.entries(tempStyle)) {
+          newInlineStyle += `${prop}: ${value} !important; `;
+        }
+        element.setAttribute('style', newInlineStyle);
+      }
+    }
+    
     // 查找所有样式表
     for (let i = 0; i < document.styleSheets.length; i++) {
       try {
@@ -540,14 +603,20 @@ function preprocessColors() {
                     prop: prop,
                     value: value
                   });
-                  // 替换为灰色/绿色
-                  if (value.includes('0.2')) {
-                    rule.style.setProperty(prop, 'rgba(16, 163, 127, 0.2)', rule.style.getPropertyPriority(prop));
-                  } else if (value.includes('0.3')) {
-                    rule.style.setProperty(prop, 'rgba(16, 163, 127, 0.3)', rule.style.getPropertyPriority(prop));
-                  } else {
-                    rule.style.setProperty(prop, 'rgb(16, 163, 127)', rule.style.getPropertyPriority(prop));
+                  
+                  // 替换为适当的RGB颜色
+                  let rgbValue = 'rgb(16, 163, 127)'; // 默认绿色
+                  
+                  // 根据透明度调整
+                  if (value.match(/oklch\([^)]*\/\s*0\.\d+\s*\)/)) {
+                    const opacityMatch = value.match(/\/\s*(0\.\d+)\s*\)/);
+                    if (opacityMatch && opacityMatch[1]) {
+                      const opacity = parseFloat(opacityMatch[1]);
+                      rgbValue = `rgba(16, 163, 127, ${opacity})`;
+                    }
                   }
+                  
+                  rule.style.setProperty(prop, rgbValue, rule.style.getPropertyPriority(prop));
                 }
               }
             }
@@ -560,24 +629,10 @@ function preprocessColors() {
       }
     }
     
-    // 处理内联样式
-    const elementsWithStyle = document.querySelectorAll('[style*="oklch"]');
-    for (let i = 0; i < elementsWithStyle.length; i++) {
-      const element = elementsWithStyle[i];
-      const style = element.getAttribute('style');
-      originalColors.push({
-        element: element,
-        style: style
-      });
-      
-      // 替换内联样式中的oklch
-      let newStyle = style.replace(/oklch\([^)]+\)/g, 'rgb(16, 163, 127)');
-      element.setAttribute('style', newStyle);
-    }
-    
     log(`已处理 ${originalColors.length} 个颜色定义`);
   } catch (error) {
     handleError(error, 'preprocessColors');
+    // 失败时继续，尝试使用现有的颜色完成截图
   }
 }
 
@@ -590,9 +645,16 @@ function restoreColors() {
     for (let i = 0; i < originalColors.length; i++) {
       const item = originalColors[i];
       if (item.rule && item.prop) {
+        // 恢复CSS规则中的颜色
         item.rule.style.setProperty(item.prop, item.value, item.rule.style.getPropertyPriority(item.prop));
       } else if (item.element && item.style) {
+        // 恢复内联样式
         item.element.setAttribute('style', item.style);
+      } else if (item.element && item.prop && item.value) {
+        // 恢复通过计算样式发现并修改的元素
+        let currentStyle = item.element.getAttribute('style') || '';
+        currentStyle = currentStyle.replace(new RegExp(`${item.prop}:\\s*[^;]+;?\\s*`, 'g'), '');
+        item.element.setAttribute('style', currentStyle);
       }
     }
     
